@@ -25,7 +25,7 @@ defmodule Axe.Client do
         {:error, error} ->
           error
         after
-          5000 ->
+          30000 ->
             %Axe.Worker.Error{url: url, reason: "An error occurred", requester: self}
       end
     end
