@@ -188,7 +188,7 @@ defmodule Axe.Worker do
     response = %Response{
       url: session.url,
       status_code: session.status_code,
-      resp_headers: session.resp_headers,
+      resp_headers: session.resp_headers |> Enum.into(%{}),
       body: session.data
     }
     send session.requester, {:ok, response}
@@ -209,7 +209,7 @@ defmodule Axe.Worker do
     response = %Response{
       url: session.url,
       status_code: session.status_code,
-      resp_headers: session.resp_headers,
+      resp_headers: session.resp_headers |> Enum.into(%{}),
       body: session.info
     }
     send session.requester, {:ok, response}

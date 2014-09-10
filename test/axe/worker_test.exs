@@ -1,4 +1,4 @@
-defmodule ClientTest do
+defmodule WorkerTest do
   use ExUnit.Case, async: true
   use Jazz
 
