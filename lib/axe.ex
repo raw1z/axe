@@ -8,7 +8,7 @@ defmodule Axe do
 
     children = [
       # Define workers and child supervisors to be supervised
-      worker(Axe.Client, [])
+      worker(Axe.Worker, [])
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
