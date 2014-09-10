@@ -56,7 +56,7 @@ defmodule Axe.Worker do
     noreply
   end
 
-  Enum.map [:get], fn method ->
+  Enum.map [:get, :post, :put, :head, :delete, :patch], fn method ->
     defcast unquote(method)(pid, url), when: is_pid(pid)  do
       do_request(pid, %Request{url: url, method: unquote(method)})
       noreply
@@ -115,7 +115,7 @@ defmodule Axe.Worker do
   end
 
   def do_request(pid, request) when is_pid(pid) do
-    uri = {:hackney_url, _transport, scheme, netloc, _raw_path, path, _qs, _fragment, _host, _port, user, password} = :hackney_url.parse_url(request.url)
+    uri = {:hackney_url, _transport, _scheme, _netloc, _raw_path, _path, _qs, _fragment, _host, _port, user, password} = :hackney_url.parse_url(request.url)
     if String.length(user) > 0 do
       token = Base.encode64("#{user}:#{password}")
       url = :hackney_url.unparse_url hackney_url(uri, user: "", password: "")
@@ -205,7 +205,7 @@ defmodule Axe.Worker do
     session
   end
 
-  defp process_session(%Session{status_code: status_code} = session) do
+  defp process_session(%Session{} = session) do
     response = %Response{
       url: session.url,
       status_code: session.status_code,
