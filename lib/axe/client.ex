@@ -28,6 +28,9 @@ defmodule Axe.Client do
     defstruct url: nil, method: nil, headers: [], body: ""
   end
 
+  require Record
+  Record.defrecord :hackney_url, Record.extract(:hackney_url, from_lib: "hackney/include/hackney_lib.hrl")
+
   definit do
     Agent.start_link(fn -> %{} end, name: __MODULE__)
     initial_state(nil)
@@ -54,6 +57,26 @@ defmodule Axe.Client do
   end
 
   Enum.map [:get], fn method ->
+    defcall unquote(method)(url), from: {pid, _} do
+      do_request(pid, %Request{url: url, method: unquote(method)})
+      reply :ok
+    end
+
+    defcall unquote(method)(url, headers), from: {pid, _}, when: is_list(headers) do
+      do_request(pid, %Request{url: url, method: unquote(method), headers: headers})
+      reply :ok
+    end
+
+    defcall unquote(method)(url, body), from: {pid, _}, when: is_binary(body) do
+      do_request(pid, %Request{url: url, method: unquote(method), body: body})
+      reply :ok
+    end
+
+    defcall unquote(method)(pid, url, headers, body), from: {pid, _} do
+      do_request(pid, %Request{url: url, method: unquote(method), headers: headers, body: body})
+      reply :ok
+    end
+
     defcast unquote(method)(pid, url) do
       do_request(pid, %Request{url: url, method: unquote(method)})
       noreply
@@ -95,22 +118,40 @@ defmodule Axe.Client do
     noreply
   end
 
+  definfo {:hackney_response, ref, {:error, {:closed, reason}}} do
+    session = get_session(ref)
+    if session.status_code in [302, 301] do
+      follow_redirection(session)
+    else
+      send session.requester, %Error{ url: session.url, requester: session.requester, reason: reason }
+    end
+    noreply
+  end
+
   definfo {:hackney_response, ref, {:error, reason}} do
     session = get_session(ref)
-    send session.pid, %Error{ url: session.url, requester: session.requester, reason: reason }
+    send session.requester, %Error{ url: session.url, requester: session.requester, reason: reason }
     noreply
   end
 
   def do_request(pid, request) when is_pid(pid) do
-    uri = URI.parse(request.url)
-    url = if uri.scheme == nil, do: "http://#{request.url}", else: request.url
-    case :hackney.request(request.method, url, request.headers, request.body, [:async, {:stream_to, self}]) do
+    uri = {:hackney_url, _transport, scheme, netloc, _raw_path, path, _qs, _fragment, _host, _port, user, password} = :hackney_url.parse_url(request.url)
+    if String.length(user) > 0 do
+      token = Base.encode64("#{user}:#{password}")
+      url = :hackney_url.unparse_url hackney_url(uri, user: "", password: "")
+      headers = [{"Authorization", "Basic #{token}"}|request.headers]
+    else
+      url = :hackney_url.unparse_url(uri)
+      headers = request.headers
+    end
+
+    case :hackney.request(request.method, url, headers, request.body, [:async, {:stream_to, self}]) do
       {:ok, client_ref} ->
         register_session %Session{
           url: url,
           requester: pid,
           ref: client_ref,
-          req_headers: request.headers,
+          req_headers: headers,
           req_method: request.method,
           req_body: request.body
         }
@@ -177,12 +218,7 @@ defmodule Axe.Client do
   defp process_session(%Session{status_code: status_code} = session) when status_code in [302, 301] do
     url = Session.location(session)
     if url != nil do
-      if URI.parse(url).host == nil do
-        uri = URI.parse(session.url)
-        url = "#{uri.scheme}://#{uri.authority}#{url}"
-      end
-
-      request session.requester, url, session.req_method, session.req_headers, session.req_body
+      follow_redirection(session)
     else
       send session.pid, %Error{ url: session.url, requester: session.requester, reason: "WRONG REDIRECTION" }
     end
@@ -198,5 +234,15 @@ defmodule Axe.Client do
     }
     send session.requester, {:ok, response}
     session
+  end
+
+  defp follow_redirection(session) do
+    url = Session.location(session)
+    if URI.parse(url).host == nil do
+      uri = URI.parse(session.url)
+      url = "#{uri.scheme}://#{uri.authority}#{url}"
+    end
+
+    request session.requester, url, session.req_method, session.req_headers, session.req_body
   end
 end
