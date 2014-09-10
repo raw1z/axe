@@ -1,0 +1,11 @@
+{
+  "lib/*.ex": {
+    "alternate": "test/{}_test.exs",
+    "command": "lib"
+  },
+
+  "test/*_test.exs": {
+    "alternate": "lib/{}.ex",
+    "command": "test"
+  },
+}

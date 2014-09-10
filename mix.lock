@@ -1,0 +1,4 @@
+%{"exactor": {:package, "0.7.0"},
+  "hackney": {:package, "0.13.1"},
+  "idna": {:package, "1.0.1"},
+  "jazz": {:package, "0.2.1"}}

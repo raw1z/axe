@@ -1,0 +1,10 @@
+/_build
+/deps
+erl_crash.dump
+*.ez
+/tmp
+/priv/static/vendor
+/node_modules
+/priv/static/css/**/*.css
+/priv/static/js/**/*.js
+!/priv/static/js/phoenix.js
