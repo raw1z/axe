@@ -39,12 +39,6 @@ defmodule ClientTest do
     assert Axe.Client.get("localhost:8080/get", map_header).body =~ "X-Value"
   end
 
-  test "timeout" do
-    response = %Axe.Worker.Error{} = Axe.Client.get("localhost:8080/delay/1000")
-    assert response.reason == "An error occurred"
-    assert response.url == "localhost:8080/delay/1000"
-  end
-
   test "basic_auth" do
     assert_response Axe.Client.get("http://user:pass@localhost:8080/basic-auth/user/pass")
   end
