@@ -57,42 +57,22 @@ defmodule Axe.Client do
   end
 
   Enum.map [:get], fn method ->
-    defcall unquote(method)(url), from: {pid, _} do
-      do_request(pid, %Request{url: url, method: unquote(method)})
-      reply :ok
-    end
-
-    defcall unquote(method)(url, headers), from: {pid, _}, when: is_list(headers) do
-      do_request(pid, %Request{url: url, method: unquote(method), headers: headers})
-      reply :ok
-    end
-
-    defcall unquote(method)(url, body), from: {pid, _}, when: is_binary(body) do
-      do_request(pid, %Request{url: url, method: unquote(method), body: body})
-      reply :ok
-    end
-
-    defcall unquote(method)(pid, url, headers, body), from: {pid, _} do
-      do_request(pid, %Request{url: url, method: unquote(method), headers: headers, body: body})
-      reply :ok
-    end
-
-    defcast unquote(method)(pid, url) do
+    defcast unquote(method)(pid, url), when: is_pid(pid)  do
       do_request(pid, %Request{url: url, method: unquote(method)})
       noreply
     end
 
-    defcast unquote(method)(pid, url, headers), when: is_list(headers) do
+    defcast unquote(method)(pid, url, headers), when: is_pid(pid) and is_list(headers) do
       do_request(pid, %Request{url: url, method: unquote(method), headers: headers})
       noreply
     end
 
-    defcast unquote(method)(pid, url, body), when: is_binary(body) do
+    defcast unquote(method)(pid, url, body), when: is_pid(pid) and is_binary(body) do
       do_request(pid, %Request{url: url, method: unquote(method), body: body})
       noreply
     end
 
-    defcast unquote(method)(pid, url, headers, body) do
+    defcast unquote(method)(pid, url, headers, body), when: is_pid(pid)  do
       do_request(pid, %Request{url: url, method: unquote(method), headers: headers, body: body})
       noreply
     end
