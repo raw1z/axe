@@ -4,7 +4,7 @@ defmodule Axe.Mixfile do
   def project do
     [app: :axe,
      version: "0.0.2",
-     elixir: "~> 1.0.0-rc2",
+     elixir: "~> 1.0.0",
      deps: deps]
   end
 
