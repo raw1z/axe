@@ -1,5 +1,5 @@
 defmodule Axe.Worker do
-  use ExActor.GenServer, export: :axe_client
+  use ExActor.GenServer, export: :axe_worker
 
   require Logger
 
