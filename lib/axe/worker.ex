@@ -32,7 +32,6 @@ defmodule Axe.Worker do
   Record.defrecord :hackney_url, Record.extract(:hackney_url, from_lib: "hackney/include/hackney_lib.hrl")
 
   definit do
-    Agent.start_link(fn -> %{} end, name: __MODULE__)
     initial_state(nil)
   end
 
@@ -115,6 +114,14 @@ defmodule Axe.Worker do
   definfo {:hackney_response, ref, {:error, reason}} do
     session = get_session(ref)
     send_error session.requester, session.url, reason
+    noreply
+  end
+
+  definfo _=params do
+    Logger.warn """
+    unmanaged message:
+    #{inspect params}
+    """
     noreply
   end
 
@@ -228,19 +235,19 @@ defmodule Axe.Worker do
         method: #{new_session.req_method}
         body: #{new_session.req_body}
     """
-    Agent.update(__MODULE__, &Map.put(&1, new_session.ref, new_session))
+    Agent.update(:axe_agent, &Map.put(&1, new_session.ref, new_session))
   end
 
   defp get_session(ref) do
-    Agent.get(__MODULE__, &Map.get(&1, ref))
+    Agent.get(:axe_agent, &Map.get(&1, ref))
   end
 
   defp update_session(session) do
-    Agent.update(__MODULE__, &Map.put(&1, session.ref, session))
+    Agent.update(:axe_agent, &Map.put(&1, session.ref, session))
   end
 
   defp delete_session(session) do
-    Agent.update(__MODULE__, &Map.delete(&1, session.ref))
+    Agent.update(:axe_agent, &Map.delete(&1, session.ref))
     session
   end
 
