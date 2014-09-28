@@ -2,6 +2,19 @@ defmodule Axe.WorkerSession do
   use Axe.GenFSM
   require Logger
 
+  defmodule SessionData do
+    defstruct ref: nil, url: nil, requester: nil, status_code: nil, resp_headers: nil, info: nil, data: "", req_headers: nil, req_method: nil, req_body: nil
+
+    def location(session) do
+      get_location(session.resp_headers)
+    end
+
+    defp get_location([]), do: nil
+    defp get_location([{"Location", location}|_]), do: location
+    defp get_location([{"location", location}|_]), do: location
+    defp get_location([_|tail]), do: get_location(tail)
+  end
+
   require Record
   Record.defrecord :hackney_url, Record.extract(:hackney_url, from_lib: "hackney/include/hackney_lib.hrl")
 
@@ -18,7 +31,7 @@ defmodule Axe.WorkerSession do
   # GenFSM implementation
 
   def init(requester) do
-    {:ok, :idle, %Axe.Worker.Session{requester: requester}}
+    {:ok, :idle, %SessionData{requester: requester}}
   end
 
   def idle({:execute_request, request}, session_data) do
@@ -42,7 +55,7 @@ defmodule Axe.WorkerSession do
 
     case :hackney.request(request.method, url, headers, request.body, [:async, {:stream_to, self}]) do
       {:ok, client_ref} ->
-        session_data = %Axe.Worker.Session{session_data |
+        session_data = %SessionData{session_data |
           url: url,
           ref: client_ref,
           req_headers: headers,
@@ -51,7 +64,7 @@ defmodule Axe.WorkerSession do
         {:next_state, :started, session_data}
 
       {:error, reason} ->
-        error = %Axe.Worker.Error{
+        error = %Axe.Error{
           url: request.url,
           requester: session_data.requester,
           reason: reason }
@@ -60,7 +73,7 @@ defmodule Axe.WorkerSession do
   end
 
   def handle_info({:hackney_response, _ref, {:status, 200, _}}, :started, session_data) do
-    session_data = %Axe.Worker.Session{session_data | status_code: 200}
+    session_data = %SessionData{session_data | status_code: 200}
 
     Logger.debug """
     [axe] received status code:
@@ -72,7 +85,7 @@ defmodule Axe.WorkerSession do
   end
 
   def handle_info({:hackney_response, _ref, {:status, status_code, reason}}, :started, session_data) do
-    session_data = %Axe.Worker.Session{ session_data | status_code: status_code, info: reason }
+    session_data = %SessionData{ session_data | status_code: status_code, info: reason }
 
     Logger.debug """
     [axe] received status code:
@@ -85,7 +98,7 @@ defmodule Axe.WorkerSession do
   end
 
   def handle_info {:hackney_response, _ref, {:headers, headers}}, :status_code_received, session_data do
-    session_data = %Axe.Worker.Session{ session_data | resp_headers: headers }
+    session_data = %SessionData{ session_data | resp_headers: headers }
 
     Logger.debug """
     [axe] received headers:
@@ -98,7 +111,7 @@ defmodule Axe.WorkerSession do
 
   def handle_info({:hackney_response, _ref, chunk}, state_name, session_data) when is_binary(chunk) and state_name in [:headers_received, :chunk_received] do
     data = << session_data.data :: binary, chunk :: binary >>
-    session_data = %Axe.Worker.Session{ session_data | data: data }
+    session_data = %SessionData{ session_data | data: data }
 
     Logger.debug """
     [axe] received chunk:
@@ -124,7 +137,6 @@ defmodule Axe.WorkerSession do
     {:next_state, state_name, session_data}
   end
 
-
   def terminate(:error, _state, {requester, error}) do
     send requester, {:error, error}
 
@@ -137,8 +149,8 @@ defmodule Axe.WorkerSession do
     :ok
   end
 
-  def terminate(:normal, _state, %Axe.Worker.Session{status_code: status_code}=session_data) when status_code in [301, 302] do
-    url = Axe.Worker.Session.location(session_data)
+  def terminate(:normal, _state, %SessionData{status_code: status_code}=session_data) when status_code in [301, 302] do
+    url = SessionData.location(session_data)
     if url != nil do
       if URI.parse(url).host == nil do
         uri = URI.parse(session_data.url)
@@ -155,14 +167,14 @@ defmodule Axe.WorkerSession do
         to: #{request.url}
       """
     else
-      send session_data.requester, %Axe.Worker.Error{ url: session_data.url, requester: session_data.requester, reason: "WRONG REDIRECTION" }
+      send session_data.requester, %Axe.Error{ url: session_data.url, requester: session_data.requester, reason: "WRONG REDIRECTION" }
     end
 
     :ok
   end
 
-  def terminate(:normal, _state, %Axe.Worker.Session{}=session_data) do
-    response = %Axe.Worker.Response{
+  def terminate(:normal, _state, %SessionData{}=session_data) do
+    response = %Axe.Response{
       url: session_data.url,
       status_code: session_data.status_code,
       resp_headers: session_data.resp_headers |> Enum.into(%{}),
