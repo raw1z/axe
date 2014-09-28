@@ -78,7 +78,7 @@ defmodule WorkerTest do
   end
 
   defp assert_http_response(response) do
-    assert match?(%Axe.Worker.Response{}, response)
+    assert match?(%Axe.Response{}, response)
     assert response.status_code == 200
     assert response.resp_headers != nil
     json = JSON.decode!(response.body)
@@ -86,7 +86,7 @@ defmodule WorkerTest do
   end
 
   defp assert_https_response(response) do
-    assert match?(%Axe.Worker.Response{}, response)
+    assert match?(%Axe.Response{}, response)
     assert response.status_code == 200
     assert response.resp_headers != nil
     json = JSON.decode!(response.body)

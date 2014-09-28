@@ -1,4 +1,10 @@
+# CHANGELOG
+
+## 0.0.3
+
+* use gen_fsm to manage hackney asynchronious requests
+
 ## 0.0.2
 
-- fix a bug with some requests
+* fix a bug with some requests
 

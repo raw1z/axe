@@ -8,7 +8,8 @@ defmodule Axe do
 
     children = [
       # Define workers and child supervisors to be supervised
-      worker(Axe.Worker, [])
+      worker(Axe.Worker, []),
+      worker(Agent, [fn -> %{} end, [name: :axe_agent]])
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
