@@ -126,7 +126,15 @@ defmodule Axe.WorkerSession do
     {:stop, :normal, session_data}
   end
 
-  def handle_info {:hackney_response, ref, {:error, reason}}, _state_name, session_data do
+  def handle_info({:hackney_response, _ref, {:error, {:closed, ""}}}, _state_name, %SessionData{status_code: status_code}=session_data) when status_code in [302, 301] do
+    Logger.warn """
+    received hackney error for session:
+      session: #{inspect session_data}
+    """
+    {:stop, :normal, session_data}
+  end
+
+  def handle_info {:hackney_response, _ref, {:error, reason}}, _state_name, session_data do
     error = %Axe.Error{
       url: session_data.url,
       requester: session_data.requester,
