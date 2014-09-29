@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.0.4
+
+* add support for hackney error messages
+
 ## 0.0.3
 
 * use gen_fsm to manage hackney asynchronious requests

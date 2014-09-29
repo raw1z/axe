@@ -68,7 +68,7 @@ defmodule Axe.WorkerSession do
           url: request.url,
           requester: session_data.requester,
           reason: reason }
-        {:stop, :shutdown, {session_data.requester, error}}
+        {:stop, :shutdown, error}
     end
   end
 
@@ -126,6 +126,14 @@ defmodule Axe.WorkerSession do
     {:stop, :normal, session_data}
   end
 
+  def handle_info {:hackney_response, ref, {:error, reason}}, _state_name, session_data do
+    error = %Axe.Error{
+      url: session_data.url,
+      requester: session_data.requester,
+      reason: reason }
+    {:stop, :shutdown, error}
+  end
+
   def handle_info(msg, state_name, session_data) do
     Logger.error """
     [axe] received unmanaged message:
@@ -137,13 +145,13 @@ defmodule Axe.WorkerSession do
     {:next_state, state_name, session_data}
   end
 
-  def terminate(:error, _state, {requester, error}) do
-    send requester, {:error, error}
+  def terminate(:error, _state, error) do
+    send error.requester, {:error, error}
 
     Logger.error """
     [axe] send error:
       url: #{error.url}
-      response: #{inspect error}
+      error: #{inspect error}
     """
 
     :ok
