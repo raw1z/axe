@@ -3,8 +3,8 @@ defmodule Axe.Mixfile do
 
   def project do
     [app: :axe,
-     version: "0.0.3",
-     elixir: "~> 1.0.0-rc2",
+     version: "0.0.4",
+     elixir: "~> 1.0.0",
      deps: deps]
   end
 
