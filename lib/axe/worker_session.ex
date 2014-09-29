@@ -162,9 +162,12 @@ defmodule Axe.WorkerSession do
         url = "#{uri.scheme}://#{uri.authority}#{url}"
       end
 
-      request = %Axe.Worker.Request{url: url, method: session_data.req_method, headers: session_data.req_headers, body: session_data.req_body}
-      {:ok, session} = __MODULE__.start_link session_data.requester
-      __MODULE__.execute_request session, request
+      request = %Axe.Worker.Request{
+        url: url,
+        method: session_data.req_method,
+        headers: session_data.req_headers,
+        body: session_data.req_body}
+      send :axe_worker, {:redirect, session_data.requester, request}
 
       Logger.debug """
       [axe] redirected:
