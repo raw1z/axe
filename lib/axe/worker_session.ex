@@ -122,7 +122,7 @@ defmodule Axe.WorkerSession do
     {:next_state, :chunk_received, session_data}
   end
 
-  def handle_info({:hackney_response, _ref, :done}, state_name, session_data) when state_name in [:chunk_received, :headers_received] do
+  def handle_info({:hackney_response, _ref, :done}, _state_name, session_data) do
     {:stop, :normal, session_data}
   end
 
