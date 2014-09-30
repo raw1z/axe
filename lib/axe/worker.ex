@@ -51,9 +51,8 @@ defmodule Axe.Worker do
     end
   end
 
-  definfo {:redirect, requester, request} do
-    {:ok, session} = Axe.WorkerSession.start_link requester
-    Axe.WorkerSession.execute_request session, request
+  definfo {:request, pid, request} do
+    do_request(pid, request)
     noreply
   end
 

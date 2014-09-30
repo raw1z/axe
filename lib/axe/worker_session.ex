@@ -115,31 +115,12 @@ defmodule Axe.WorkerSession do
     {:stop, :normal, session_data}
   end
 
-  def handle_info({:hackney_response, _ref, {:error, {:closed, ""}}}, _state_name, %SessionData{status_code: status_code}=session_data) when status_code in [302, 301] do
+  def handle_info({:hackney_response, _ref, {:error, {:closed, ""}}}, _state_name, session_data) do
     Logger.warn """
-    received hackney error for session:
+    received 'Connection: close' header for session:
       session: #{inspect session_data}
     """
     {:stop, :normal, session_data}
-  end
-
-  def handle_info {:hackney_response, _ref, {:error, reason}}, _state_name, session_data do
-    error = %Axe.Error{
-      url: session_data.url,
-      requester: session_data.requester,
-      reason: reason }
-    {:stop, :shutdown, error}
-  end
-
-  def handle_info(msg, state_name, session_data) do
-    Logger.error """
-    [axe] received unmanaged message:
-      url: #{session_data.url}
-      state: #{state_name}
-      data: #{inspect session_data}
-      message: #{inspect msg}
-    """
-    {:next_state, state_name, session_data}
   end
 
   def terminate(:error, _state, error) do
@@ -167,7 +148,7 @@ defmodule Axe.WorkerSession do
         method: session_data.req_method,
         headers: session_data.req_headers,
         body: session_data.req_body}
-      send :axe_worker, {:redirect, session_data.requester, request}
+      send :axe_worker, {:request, session_data.requester, request}
 
       Logger.debug """
       [axe] redirected:
@@ -197,10 +178,6 @@ defmodule Axe.WorkerSession do
       response: #{inspect response}
     """
 
-    :ok
-  end
-
-  def terminate(_reason, _state_name, _state_data) do
     :ok
   end
 end
