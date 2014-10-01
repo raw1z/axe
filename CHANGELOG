@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.0.8
+
+* replace jazz by poison
+
 ## 0.0.7
 
 * make the worker process start the gen_fsm processes created for redirections
