@@ -1,6 +1,6 @@
 defmodule WorkerTest do
   use ExUnit.Case, async: true
-  use Jazz
+  alias Poison, as: JSON
 
   setup_all do
     {:ok, _} = :application.ensure_all_started(:httparrot)

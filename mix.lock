@@ -7,4 +7,5 @@
   "jazz": {:package, "0.2.1"},
   "jsex": {:package, "2.0.0"},
   "jsx": {:package, "2.1.1"},
+  "poison": {:package, "1.1.1"},
   "ranch": {:package, "1.0.0"}}
