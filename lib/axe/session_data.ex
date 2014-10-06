@@ -5,7 +5,7 @@ defmodule Axe.SessionData do
             status_code: nil,
             resp_headers: nil,
             info: nil,
-            data: "",
+            data: nil,
             req_headers: nil,
             req_method: nil,
             req_body: nil
