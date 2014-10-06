@@ -99,7 +99,7 @@ defmodule Axe.WorkerSession do
   end
 
   def handle_info({:hackney_response, _ref, chunk}, state_name, session_data) when is_binary(chunk) and state_name in [:headers_received, :chunk_received] do
-    data = << session_data.data :: binary, chunk :: binary >>
+    data = << (session_data.data || "") :: binary, chunk :: binary >>
     session_data = %SessionData{ session_data | data: data }
 
     Logger.debug """
@@ -167,7 +167,7 @@ defmodule Axe.WorkerSession do
       url: session_data.url,
       status_code: session_data.status_code,
       resp_headers: session_data.resp_headers |> Enum.into(%{}),
-      body: session_data.info || session_data.data
+      body: (session_data.data || session_data.info) || ""
     }
 
     send session_data.requester, {:ok, response}
