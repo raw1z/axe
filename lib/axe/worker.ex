@@ -5,9 +5,7 @@ defmodule Axe.Worker do
     defstruct url: nil, method: nil, headers: [], body: ""
   end
 
-  definit do
-    initial_state(nil)
-  end
+  defstart start_link, do: initial_state(nil)
 
   defcast request(pid, url, method) do
     do_request(pid, %Request{url: url, method: method})
@@ -51,7 +49,7 @@ defmodule Axe.Worker do
     end
   end
 
-  definfo {:request, pid, request} do
+  defhandleinfo {:request, pid, request} do
     do_request(pid, request)
     noreply
   end
