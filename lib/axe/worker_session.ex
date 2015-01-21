@@ -1,6 +1,6 @@
 defmodule Axe.WorkerSession do
   use Axe.GenFSM
-  require Logger
+  use Axe.Logger
 
   alias Axe.SessionData
 
