@@ -19,15 +19,15 @@ defmodule ClientTest do
   end
 
   test "post" do
-    assert_response Axe.Client.post("localhost:8080/post", "hello")
+    assert_response Axe.Client.post("localhost:8080/post", [], "hello")
   end
 
   test "put" do
-    assert_response Axe.Client.put("localhost:8080/put", "test")
+    assert_response Axe.Client.put("localhost:8080/put", [], "test")
   end
 
   test "patch" do
-    assert_response Axe.Client.patch("localhost:8080/patch", "test")
+    assert_response Axe.Client.patch("localhost:8080/patch", [], "test")
   end
 
   test "delete" do
@@ -36,16 +36,16 @@ defmodule ClientTest do
 
   test "request headers as a map" do
     map_header = %{"X-Header" => "X-Value"}
-    assert Axe.Client.get("localhost:8080/get", map_header).body =~ "X-Value"
+    {:ok, response} = Axe.Client.get("localhost:8080/get", map_header)
+    assert response.body =~ "X-Value"
   end
 
   test "basic_auth" do
     assert_response Axe.Client.get("http://user:pass@localhost:8080/basic-auth/user/pass")
   end
 
-  defp assert_response(response, function \\ nil) do
+  defp assert_response({:ok, response}, function \\ nil) do
     assert response.status_code == 200
-    assert response.resp_headers["connection"] == "keep-alive"
     assert is_binary(response.body)
 
     unless function == nil, do: function.(response)

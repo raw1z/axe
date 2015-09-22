@@ -42,7 +42,8 @@ defmodule Axe.WorkerSession do
       body: #{request.body}
     """
 
-    case :hackney.request(request.method, url, headers, request.body, [:async, {:stream_to, self}]) do
+    options = List.flatten [[:async, {:stream_to, self}], request.options]
+    case :hackney.request(request.method, url, headers, request.body, options) do
       {:ok, client_ref} ->
         session_data = %SessionData{session_data |
           url: url,
