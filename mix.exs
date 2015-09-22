@@ -3,8 +3,8 @@ defmodule Axe.Mixfile do
 
   def project do
     [app: :axe,
-     version: "0.1.1",
-     elixir: "~> 1.0.0",
+     version: "0.2.0",
+     elixir: "~> 1.0",
      deps: deps]
   end
 
@@ -27,10 +27,10 @@ defmodule Axe.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [
-      { :exactor , "~> 2.0.1"                  } ,
-      { :hackney , "~> 0.15.2"                 } ,
+      { :exactor , "~> 2.1.2"                  } ,
+      { :hackney , "~> 1.3.1"                  } ,
       { :httparrot , "~> 0.3.3"  , only: :test } ,
-      { :poison  , "~> 1.3.0"                  }
+      { :poison  , "~> 1.5.0"                  }
     ]
   end
 end
