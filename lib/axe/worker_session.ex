@@ -116,9 +116,9 @@ defmodule Axe.WorkerSession do
     {:stop, :normal, session_data}
   end
 
-  def handle_info({:hackney_response, _ref, {:error, {:closed, ""}}}, _state_name, session_data) do
+  def handle_info({:hackney_response, _ref, {:error, {:closed, reason}}}, _state_name, session_data) do
     Logger.warn """
-    received 'Connection: close' header for session:
+    received 'Connection: close' header with reason '#{reason}' for session:
       session: #{inspect session_data}
     """
     {:stop, :normal, session_data}
