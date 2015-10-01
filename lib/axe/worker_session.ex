@@ -167,9 +167,12 @@ defmodule Axe.WorkerSession do
     response = %Axe.Response{
       url: session_data.url,
       status_code: session_data.status_code,
-      resp_headers: session_data.resp_headers |> Enum.into(%{}),
       body: (session_data.data || session_data.info) || ""
     }
+
+    if session_data.resp_headers != nil do
+      response = %Axe.Response{ response | resp_headers: session_data.resp_headers |> Enum.into(%{}) }
+    end
 
     send session_data.requester, {:ok, response}
 
