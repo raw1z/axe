@@ -38,7 +38,7 @@ defmodule Axe.Worker do
   end
 
   defp do_request(pid, request) when is_pid(pid) do
-    {:ok, session} = Axe.WorkerSession.start_link(pid)
+    {:ok, session} = Axe.WorkerSessionSupervisor.start_session(pid)
     Axe.WorkerSession.execute_request session, request
   end
 end

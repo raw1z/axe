@@ -8,6 +8,7 @@ defmodule Axe do
 
     children = [
       # Define workers and child supervisors to be supervised
+      supervisor(Axe.WorkerSessionSupervisor, []),
       worker(Axe.Worker, []),
       worker(Agent, [fn -> %{} end, [name: :axe_agent]])
     ]
