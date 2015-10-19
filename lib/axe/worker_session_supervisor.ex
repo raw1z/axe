@@ -9,10 +9,10 @@ defmodule Axe.WorkerSessionSupervisor do
     Supervisor.start_link __MODULE__, [], name: @name
   end
 
-  def start_session(pid) do
+  def start_session(request) do
     @name
     |> Process.whereis
-    |> Supervisor.start_child [pid]
+    |> Supervisor.start_child [request]
   end
 
   # Supervior implementation

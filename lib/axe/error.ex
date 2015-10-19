@@ -1,5 +1,5 @@
 defmodule Axe.Error do
-  defstruct url: nil, reason: nil, requester: nil
+  defstruct url: nil, reason: nil
 end
 
 
