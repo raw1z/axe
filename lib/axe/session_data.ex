@@ -1,14 +1,15 @@
 defmodule Axe.SessionData do
-  defstruct ref: nil,
+  defstruct request: nil,
+            ref: nil,
             url: nil,
-            requester: nil,
             status_code: nil,
             resp_headers: nil,
             info: nil,
             data: nil,
             req_headers: nil,
             req_method: nil,
-            req_body: nil
+            req_body: nil,
+            error: nil
 
   def location(session) do
     get_location(session.resp_headers)

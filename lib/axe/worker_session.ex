@@ -9,21 +9,17 @@ defmodule Axe.WorkerSession do
 
   # Public API
 
-  def start_link(requester) do
-    :gen_fsm.start_link(__MODULE__, requester, [])
-  end
-
-  def execute_request(pid, request) do
-    :gen_fsm.send_event pid, {:execute_request, request}
+  def start_link(request) do
+    :gen_fsm.start_link(__MODULE__, request, [])
   end
 
   # GenFSM implementation
 
-  def init(requester) do
-    {:ok, :idle, %SessionData{requester: requester}}
+  def init(request) do
+    {:ok, :idle, %SessionData{request: request}, 0}
   end
 
-  def idle({:execute_request, request}, session_data) do
+  def idle(:timeout, %{request: request}=session_data) do
     uri = {:hackney_url, _transport, _scheme, _netloc, _raw_path, _path, _qs, _fragment, _host, _port, user, password} = :hackney_url.parse_url(request.url)
     if String.length(user) > 0 do
       token = Base.encode64("#{user}:#{password}")
@@ -56,9 +52,10 @@ defmodule Axe.WorkerSession do
       {:error, reason} ->
         error = %Axe.Error{
           url: request.url,
-          requester: session_data.requester,
-          reason: reason }
-        {:stop, :shutdown, error}
+          reason: reason
+        }
+
+        {:stop, :shutdown, %SessionData{ session_data | error: error }}
     end
   end
 
@@ -117,15 +114,22 @@ defmodule Axe.WorkerSession do
   end
 
   def handle_info({:hackney_response, _ref, {:error, {:closed, reason}}}, _state_name, session_data) do
-    Logger.warn """
-    received 'Connection: close' header with reason '#{reason}' for session:
-      session: #{inspect session_data}
+    error = %Axe.Error{
+      url: session_data.url,
+      reason: "CLOSED: #{reason}"
+    }
+
+    Logger.error """
+    [axe] send error:
+      url: #{error.url}
+      error: #{inspect error}
     """
-    {:stop, :normal, session_data}
+
+    {:stop, :shutdown, %SessionData{ session_data | error: error}}
   end
 
-  def terminate(:error, _state, error) do
-    send error.requester, {:error, error}
+  def terminate(:shutdown, _state, %SessionData{request: request, error: error}) do
+    send request.from, {:error, error}
 
     Logger.error """
     [axe] send error:
@@ -148,8 +152,11 @@ defmodule Axe.WorkerSession do
         url: url,
         method: session_data.req_method,
         headers: session_data.req_headers,
-        body: session_data.req_body}
-      send :axe_worker, {:request, session_data.requester, request}
+        body: session_data.req_body,
+        from: session_data.request.from
+      }
+
+      GenServer.cast :axe_worker, {:request, request}
 
       Logger.debug """
       [axe] redirected:
@@ -157,7 +164,11 @@ defmodule Axe.WorkerSession do
         to: #{request.url}
       """
     else
-      send session_data.requester, %Axe.Error{ url: session_data.url, requester: session_data.requester, reason: "WRONG REDIRECTION" }
+      error = %Axe.Error{
+        url: session_data.url,
+        reason: "WRONG REDIRECTION"
+      }
+      send session_data.request.from, error
     end
 
     :ok
@@ -174,7 +185,7 @@ defmodule Axe.WorkerSession do
       response = %Axe.Response{ response | resp_headers: session_data.resp_headers |> Enum.into(%{}) }
     end
 
-    send session_data.requester, {:ok, response}
+    send session_data.request.from, {:ok, response}
 
     Logger.debug """
     [axe] send response:

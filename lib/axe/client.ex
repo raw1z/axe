@@ -21,7 +21,7 @@ defmodule Axe.Client do
           data
         after
           30000 ->
-            %Axe.Error{url: url, reason: "An error occurred", requester: self}
+            %Axe.Error{url: url, reason: "An error occurred"}
       end
     end
   end
