@@ -27,7 +27,7 @@ defmodule Axe.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [
-      { :hackney , "~> 1.3.1"                  } ,
+      { :hackney , "~> 1.4.4"                  } ,
       { :httparrot , "~> 0.3.3"  , only: :test } ,
       { :poison  , "~> 1.5.0"                  }
     ]
