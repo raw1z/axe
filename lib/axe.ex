@@ -18,4 +18,12 @@ defmodule Axe do
     opts = [strategy: :one_for_one, name: Axe.Supervisor]
     Supervisor.start_link(children, opts)
   end
+
+  Enum.map [:get, :head, :post, :put, :patch, :delete], fn method ->
+    def unquote(method)(url, headers \\ [], body \\ "", options \\ [])
+    def unquote(method)(url, headers, body, options) when is_map(headers) and is_binary(body), do: unquote(method)(url, Map.to_list(headers), body, options)
+    def unquote(method)(url, headers, body, options) when is_list(headers) and is_binary(body) do
+      Axe.Client.unquote(method)(url, headers, body, options)
+    end
+  end
 end
