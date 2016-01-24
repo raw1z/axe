@@ -12,7 +12,7 @@ defmodule Axe.WorkerSessionSupervisor do
   def start_session(request) do
     @name
     |> Process.whereis
-    |> Supervisor.start_child [request]
+    |> Supervisor.start_child([request])
   end
 
   # Supervior implementation

@@ -21,14 +21,16 @@ defmodule Axe.WorkerSession do
 
   def idle(:timeout, %{request: request}=session_data) do
     uri = {:hackney_url, _transport, _scheme, _netloc, _raw_path, _path, _qs, _fragment, _host, _port, user, password} = :hackney_url.parse_url(request.url)
-    if String.length(user) > 0 do
-      token = Base.encode64("#{user}:#{password}")
-      url = :hackney_url.unparse_url hackney_url(uri, user: "", password: "")
-      headers = [{"Authorization", "Basic #{token}"}|request.headers]
-    else
-      url = :hackney_url.unparse_url(uri)
-      headers = request.headers
-    end
+
+    {url, headers} = 
+      if String.length(user) > 0 do
+        token = Base.encode64("#{user}:#{password}")
+        url = hackney_url(uri, user: "", password: "") |> :hackney_url.unparse_url
+        headers = [{"Authorization", "Basic #{token}"}|request.headers]
+        {url, headers}
+      else
+        {:hackney_url.unparse_url(uri), request.headers}
+      end
 
     Logger.debug """
     [axe] request:
