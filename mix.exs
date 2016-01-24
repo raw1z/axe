@@ -29,7 +29,7 @@ defmodule Axe.Mixfile do
     [
       { :hackney , "~> 1.4.4"                  } ,
       { :httparrot , "~> 0.3.3"  , only: :test } ,
-      { :poison  , "~> 1.5.0"                  }
+      { :poison  , "~> 2.0.1"                  }
     ]
   end
 end
